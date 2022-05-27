@@ -176,7 +176,13 @@ def get_cohort_for(filename, name):
       - str: the person's cohort or None
     """
 
-    # TODO: replace this with your code
+    file = open(filename)
+    lines = [line.strip() for line in file.readlines() if line.strip()]
+    for line in lines:
+        line_list = line.split('|')
+        if name == f'{line_list[0]} {line_list[1]}':
+            return line_list[4]
+    return None
 
 
 def find_duped_last_names(filename):
@@ -193,7 +199,17 @@ def find_duped_last_names(filename):
       - set[str]: a set of strings
     """
 
-    # TODO: replace this with your code
+    last_names = []
+    duplicates = set()
+    file = open(filename)
+    lines = [line.strip() for line in file.readlines() if line.strip()]
+    for line in lines:
+        line_list = line.split('|')
+        if line_list[1] in last_names:
+            duplicates.add(line_list[1])
+        else:
+            last_names.append(line_list[1])
+    return duplicates
 
 
 def get_housemates_for(filename, name):
@@ -207,13 +223,26 @@ def get_housemates_for(filename, name):
     >>> get_housemates_for('cohort_data.txt', 'Hermione Granger')
     {'Angelina Johnson', ..., 'Seamus Finnigan'}
     """
+    house = None
+    cohort = None
+    housemates = set()
+    file = open(filename)
+    lines = [line.strip() for line in file.readlines() if line.strip()]
+    for line in lines:
+        line_list = line.split('|')
+        if name == f'{line_list[0]} {line_list[1]}':
+            house = line_list[2]
+            cohort = line_list[4]
+    for line in lines:
+        line_list = line.split('|')
+        if name != f'{line_list[0]} {line_list[1]}' and house == line_list[2] and cohort == line_list[4]:
+            housemates.add(f'{line_list[0]} {line_list[1]}')
 
-    # TODO: replace this with your code
-
-
+    return housemates
 ##############################################################################
 # END OF MAIN EXERCISE.  Yay!  You did it! You Rock!
 #
+
 
 if __name__ == '__main__':
     # all_houses('cohort_data.txt')
