@@ -15,17 +15,9 @@ def all_houses(filename):
       - set[str]: a set of strings
     """
 
-    houses = set()
-
-    file = open(filename)
-    lines = [line.strip() for line in file.readlines() if line.strip()]
-    for line in lines:
-        line_list = line.split('|')
-        if line_list[2]:
-            houses.add(line_list[2])
-    file.close()
-
-    return houses
+    return {house
+            for _, house, *_ in all_data(filename)
+            if house}
 
 
 def students_by_cohort(filename, cohort='All'):
@@ -56,17 +48,9 @@ def students_by_cohort(filename, cohort='All'):
       - list[list]: a list of lists
     """
 
-    students = []
-    exclusions = ['I', 'G']
-
-    file = open(filename)
-    lines = [line.strip() for line in file.readlines() if line.strip()]
-    for line in lines:
-        line_list = line.split('|')
-        if (cohort == 'All' and not line_list[4] in exclusions) or cohort == line_list[4]:
-            students.append(line_list[0] + ' ' + line_list[1])
-
-    return sorted(students)
+    return sorted([name
+            for name, _, _, cohort_name in all_data(filename)
+            if cohort_name not in ('I', 'G') and cohort in ('All', cohort_name)])
 
 
 def all_names_by_house(filename):
@@ -109,19 +93,13 @@ def all_names_by_house(filename):
         'I': []
     }
 
-    file = open(filename)
-    lines = [line.strip() for line in file.readlines() if line.strip()]
-    for line in lines:
-        line_list = line.split('|')
-        if line_list[2] in houses:
-            houses[line_list[2]].append(line_list[0] + ' ' + line_list[1])
-        else:
-            houses[line_list[4]].append(line_list[0] + ' ' + line_list[1])
-    sorted_lists = []
-    for key, value in houses.items():
-        sorted_lists.append(sorted(value))
+    for name, house, _, cohort in all_data(filename):
+      if house:
+        houses[house].append(name)
+      else:
+        houses[cohort].append(name)
 
-    return sorted_lists
+    return [sorted(value) for value in houses.values()]
 
 
 def all_data(filename):
@@ -145,12 +123,11 @@ def all_data(filename):
 
     all_data = []
 
-    file = open(filename)
-    lines = [line.strip() for line in file.readlines() if line.strip()]
-    for line in lines:
-        line_list = line.split('|')
+    data = open(filename)
+    for line in data:
+        first, last, house, advisor, cohort_name = line.rstrip().split('|')
         all_data.append(
-            (f'{line_list[0]} {line_list[1]}', line_list[2], line_list[3], line_list[4]))
+            (f'{first} {last}', house, advisor, cohort_name))
 
     return all_data
 
@@ -176,12 +153,9 @@ def get_cohort_for(filename, name):
       - str: the person's cohort or None
     """
 
-    file = open(filename)
-    lines = [line.strip() for line in file.readlines() if line.strip()]
-    for line in lines:
-        line_list = line.split('|')
-        if name == f'{line_list[0]} {line_list[1]}':
-            return line_list[4]
+    for student_name, _, _, cohort_name in all_data(filename):
+      if name == student_name:
+        return cohort_name
     return None
 
 
@@ -201,14 +175,15 @@ def find_duped_last_names(filename):
 
     last_names = []
     duplicates = set()
-    file = open(filename)
-    lines = [line.strip() for line in file.readlines() if line.strip()]
-    for line in lines:
-        line_list = line.split('|')
-        if line_list[1] in last_names:
-            duplicates.add(line_list[1])
-        else:
-            last_names.append(line_list[1])
+    
+    for full_name, *_ in all_data(filename):
+      last = full_name.split(' ')[-1]
+
+      if last in last_names:
+        duplicates.add(last)
+      else:
+        last_names.append(last)
+    
     return duplicates
 
 
@@ -223,20 +198,23 @@ def get_housemates_for(filename, name):
     >>> get_housemates_for('cohort_data.txt', 'Hermione Granger')
     {'Angelina Johnson', ..., 'Seamus Finnigan'}
     """
-    house = None
-    cohort = None
+
     housemates = set()
-    file = open(filename)
-    lines = [line.strip() for line in file.readlines() if line.strip()]
-    for line in lines:
-        line_list = line.split('|')
-        if name == f'{line_list[0]} {line_list[1]}':
-            house = line_list[2]
-            cohort = line_list[4]
-    for line in lines:
-        line_list = line.split('|')
-        if name != f'{line_list[0]} {line_list[1]}' and house == line_list[2] and cohort == line_list[4]:
-            housemates.add(f'{line_list[0]} {line_list[1]}')
+    target_person = None
+
+    for person in all_data(filename):
+      full_name, *_ = person
+
+      if full_name == name:
+        target_person = person
+        break
+
+    if target_person:
+      target_name, target_house, _, target_cohort = target_person
+
+      for full_name, house, _, cohort_name in all_data(filename):
+        if (house, cohort_name) == (target_house, target_cohort) and full_name != name:
+          housemates.add(full_name)
 
     return housemates
 ##############################################################################
