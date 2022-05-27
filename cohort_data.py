@@ -17,7 +17,13 @@ def all_houses(filename):
 
     houses = set()
 
-    # TODO: replace this with your code
+    file = open(filename)
+    lines = [line.strip() for line in file.readlines() if line.strip()]
+    for line in lines:
+        line_list = line.split('|')
+        if line_list[2]:
+            houses.add(line_list[2])
+    file.close()
 
     return houses
 
@@ -51,8 +57,14 @@ def students_by_cohort(filename, cohort='All'):
     """
 
     students = []
+    exclusions = ['I', 'G']
 
-    # TODO: replace this with your code
+    file = open(filename)
+    lines = [line.strip() for line in file.readlines() if line.strip()]
+    for line in lines:
+        line_list = line.split('|')
+        if (cohort == 'All' and not line_list[4] in exclusions) or cohort == line_list[4]:
+            students.append(line_list[0] + ' ' + line_list[1])
 
     return sorted(students)
 
@@ -87,18 +99,29 @@ def all_names_by_house(filename):
     Return:
       - list[list]: a list of lists
     """
+    houses = {
+        "Dumbledore's Army": [],
+        'Gryffindor': [],
+        'Hufflepuff': [],
+        'Ravenclaw': [],
+        'Slytherin': [],
+        'G': [],
+        'I': []
+    }
 
-    dumbledores_army = []
-    gryffindor = []
-    hufflepuff = []
-    ravenclaw = []
-    slytherin = []
-    ghosts = []
-    instructors = []
+    file = open(filename)
+    lines = [line.strip() for line in file.readlines() if line.strip()]
+    for line in lines:
+        line_list = line.split('|')
+        if line_list[2] in houses:
+            houses[line_list[2]].append(line_list[0] + ' ' + line_list[1])
+        else:
+            houses[line_list[4]].append(line_list[0] + ' ' + line_list[1])
+    sorted_lists = []
+    for key, value in houses.items():
+        sorted_lists.append(sorted(value))
 
-    # TODO: replace this with your code
-
-    return []
+    return sorted_lists
 
 
 def all_data(filename):
@@ -122,7 +145,12 @@ def all_data(filename):
 
     all_data = []
 
-    # TODO: replace this with your code
+    file = open(filename)
+    lines = [line.strip() for line in file.readlines() if line.strip()]
+    for line in lines:
+        line_list = line.split('|')
+        all_data.append(
+            (f'{line_list[0]} {line_list[1]}', line_list[2], line_list[3], line_list[4]))
 
     return all_data
 
@@ -188,6 +216,8 @@ def get_housemates_for(filename, name):
 #
 
 if __name__ == '__main__':
+    # all_houses('cohort_data.txt')
+
     import doctest
 
     result = doctest.testfile('doctests.py',
